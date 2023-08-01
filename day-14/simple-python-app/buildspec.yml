@@ -1,6 +1,26 @@
 version: 0.2
 
+env:
+  variables:
+    DOCKER_REGISTRY_USERNAME: your-docker-username
+    DOCKER_REGISTRY_PASSWORD: your-docker-password
+    DOCKER_REGISTRY_URL: your-docker-registry-url
+
 phases:
+  install:
+    runtime-versions:
+      python: 3.8
+    commands:
+      - echo "Installing Docker..."
+      - apt-get update -y
+      - apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+      - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+      - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      - apt-get update -y
+      - apt-get install -y docker-ce
+      - echo "Docker version:"
+      - docker --version
+
   pre_build:
     commands:
       - echo "Retrieving Docker registry credentials from AWS SSM Parameter Store..."
@@ -16,17 +36,18 @@ phases:
       - pwd
       - echo "Contents of the current directory:"
       - ls -al
+      - echo "Building Docker image..."
       - cd $CODEBUILD_SRC_DIR/day-14/simple-python-app  # Update this path to the correct location of your Flask app
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: $CODEBUILD_SRC_DIR/day-14/simple-python-app  # Update this path to the correct location of your Flask app
 
 env:
   parameter-store:
     DOCKER_REGISTRY_USERNAME: /myapp/docker-credentials/username
     DOCKER_REGISTRY_PASSWORD: /myapp/docker-credentials/password
     DOCKER_REGISTRY_URL: /myapp/docker-registry/url
-
-artifacts:
-  files:
-    - '**/*'
-  base-directory: $CODEBUILD_SRC_DIR/day-14/simple-python-app  # Update this path to the correct location of your Flask app
