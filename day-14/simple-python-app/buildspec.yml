@@ -12,8 +12,11 @@ phases:
     commands:
       - echo "Logging in to Docker registry..."
       - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
-      - echo "Building Docker image..."
-      - cd /home/ubuntu/my-app   # Replace with the absolute path to your Flask app directory
+      - echo "Current working directory:"
+      - pwd
+      - echo "Contents of the current directory:"
+      - ls -al
+      - cd $CODEBUILD_SRC_DIR/day-14/simple-python-app  # Update this path to the correct location of your Flask app
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/simple-python-flask-app:latest"
 
@@ -26,4 +29,4 @@ env:
 artifacts:
   files:
     - '**/*'
-  base-directory: /home/ubuntu/my-app   # Replace with the absolute path to your Flask app directory
+  base-directory: $CODEBUILD_SRC_DIR/day-14/simple-python-app  # Update this path to the correct location of your Flask app
